@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // middleware
 app.use(cors());
@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.send("Welcome to Vouch Vault API");
 })
-console.log(process.env.DB_USER)
+
 //mongodb connection
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.pv5o1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -33,10 +33,17 @@ async function run() {
         const service = client.db("VouchVault").collection("ServiceCollection");
 
         app.get('/services',async (req,res)=>{
-            const cursor = service.find();
+            const cursor = service.find().limit(6);
             const result = await cursor.toArray();
             res.send(result);
         });
+
+        app.get('/services/:id',async (req,res)=>{
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await service.findOne(query);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
