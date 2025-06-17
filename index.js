@@ -51,6 +51,13 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/services',async (req,res)=>{
+            const serviceData = req.body;
+            console.log(serviceData);
+            const result = await service.insertOne(serviceData);
+            res.send(result);
+    })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
