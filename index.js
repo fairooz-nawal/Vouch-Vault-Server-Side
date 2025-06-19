@@ -31,6 +31,7 @@ async function run() {
         await client.connect();
 
         const service = client.db("VouchVault").collection("ServiceCollection");
+        const review = client.db("VouchVault").collection("ReviewCollection");
 
         app.get('/services',async (req,res)=>{
             const cursor = service.find().limit(6);
@@ -55,6 +56,12 @@ async function run() {
             const serviceData = req.body;
             console.log(serviceData);
             const result = await service.insertOne(serviceData);
+            res.send(result);
+    })
+
+        app.post('/reviews',async (req,res)=>{
+            const reviewData = req.body;
+            const result = await review.insertOne(reviewData);
             res.send(result);
     })
 
