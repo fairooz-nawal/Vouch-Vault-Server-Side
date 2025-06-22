@@ -34,53 +34,64 @@ async function run() {
         const review = client.db("VouchVault").collection("ReviewCollection");
 
         // Service API get
-        app.get('/services',async (req,res)=>{
+        app.get('/services', async (req, res) => {
             const cursor = service.find().limit(6);
             const result = await cursor.toArray();
             res.send(result);
         });
 
-        app.get('/allservices',async (req,res)=>{
+        app.get('/allservices', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                userEmail : email
+            }
+            const cursor = service.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/allservices', async (req, res) => {
             const cursor = service.find();
             const result = await cursor.toArray();
             res.send(result);
         });
 
-         app.get('/services/:id',async (req,res)=>{
+        
+
+        app.get('/services/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await service.findOne(query);
             res.send(result);
         })
 
-         app.get('/allservices',async (req,res)=>{
+        app.get('/allservices', async (req, res) => {
             const cursor = service.find();
             const result = await cursor.toArray();
             res.send(result);
         });
 
         // Review API get
-        app.get('/reviews',async (req,res)=>{
+        app.get('/reviews', async (req, res) => {
             const cursor = review.find();
             const result = await cursor.toArray();
             res.send(result);
         });
 
-       
+
         // Service API post
-        app.post('/services',async (req,res)=>{
+        app.post('/services', async (req, res) => {
             const serviceData = req.body;
-            console.log(serviceData);
             const result = await service.insertOne(serviceData);
             res.send(result);
-    })
+        })
 
         // Review API post
-        app.post('/reviews',async (req,res)=>{
+        app.post('/reviews', async (req, res) => {
             const reviewData = req.body;
             const result = await review.insertOne(reviewData);
             res.send(result);
-    })
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
