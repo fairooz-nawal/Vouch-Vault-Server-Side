@@ -41,17 +41,17 @@ async function run() {
         });
 
         app.get('/allservices', async (req, res) => {
+            const cursor = service.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/myservices', async (req, res) => {
             const email = req.query.email;
             const query = {
                 userEmail : email
             }
             const cursor = service.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        });
-
-        app.get('/allservices', async (req, res) => {
-            const cursor = service.find();
             const result = await cursor.toArray();
             res.send(result);
         });
@@ -78,6 +78,16 @@ async function run() {
             res.send(result);
         });
 
+         app.get('/reviews', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                userEmail : email
+            }
+            const cursor = review.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
 
         // Service API post
         app.post('/services', async (req, res) => {
@@ -85,6 +95,7 @@ async function run() {
             const result = await service.insertOne(serviceData);
             res.send(result);
         })
+        
 
         // Review API post
         app.post('/reviews', async (req, res) => {
