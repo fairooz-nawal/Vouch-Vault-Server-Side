@@ -104,7 +104,15 @@ async function run() {
             res.send(result);
         })
 
-        // Delete review API
+        // Delete  API
+         // Delete review API
+        app.delete('/allservices/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await service.deleteOne(query);
+            res.send(result);
+        })
+
         app.delete('/reviews/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
