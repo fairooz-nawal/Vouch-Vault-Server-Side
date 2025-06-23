@@ -49,27 +49,58 @@ async function run() {
         app.get('/myservices', async (req, res) => {
             const email = req.query.email;
             const query = {
-                userEmail : email
+                userEmail: email
             }
             const cursor = service.find(query);
             const result = await cursor.toArray();
             res.send(result);
         });
 
-        
-
-        app.get('/services/:id', async (req, res) => {
+        app.get('/allservices/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await service.findOne(query);
             res.send(result);
         })
 
-        app.get('/allservices', async (req, res) => {
-            const cursor = service.find();
-            const result = await cursor.toArray();
+        // Service API and PUT post Delete
+
+        app.post('/services', async (req, res) => {
+            const serviceData = req.body;
+            const result = await service.insertOne(serviceData);
             res.send(result);
-        });
+        })
+
+        app.delete('/allservices/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await service.deleteOne(query);
+            res.send(result);
+        })
+
+        app.put('/allservices/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            newDoc = req.body;
+            const updateDoc = {
+                $set: {
+                    serviceImage: newDoc.serviceImage,
+                    serviceTitle: newDoc.serviceTitle,
+                    companyName: newDoc.companyName,
+                    website: newDoc.website,
+                    description: newDoc.description,
+                    category: newDoc.category,
+                    price: newDoc.price,
+                    userEmail: newDoc.userEmail,
+                }
+            }
+           console.log("this is updated document",updateDoc); 
+            const result = await service.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+
 
         // Review API get
         app.get('/reviews', async (req, res) => {
@@ -78,40 +109,23 @@ async function run() {
             res.send(result);
         });
 
-         app.get('/reviews', async (req, res) => {
+        app.get('/reviews', async (req, res) => {
             const email = req.query.email;
             const query = {
-                userEmail : email
+                userEmail: email
             }
             const cursor = review.find(query);
             const result = await cursor.toArray();
             res.send(result);
         });
 
-
-        // Service API post
-        app.post('/services', async (req, res) => {
-            const serviceData = req.body;
-            const result = await service.insertOne(serviceData);
-            res.send(result);
-        })
-        
-
-        // Review API post
+        // Review API post delete put
         app.post('/reviews', async (req, res) => {
             const reviewData = req.body;
             const result = await review.insertOne(reviewData);
             res.send(result);
         })
 
-        // Delete  API
-         // Delete review API
-        app.delete('/allservices/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) };
-            const result = await service.deleteOne(query);
-            res.send(result);
-        })
 
         app.delete('/reviews/:id', async (req, res) => {
             const id = req.params.id;
@@ -120,25 +134,25 @@ async function run() {
             res.send(result);
         })
 
-         app.put('/reviews/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const options = { upsert: true };
-      newDoc = req.body;
-      console.log(id,newDoc)
-      const updateDoc = {
-        $set: {
-          addedDate: newDoc.addedDate,
-          image: newDoc.image,
-          review: newDoc.review,
-          rating: newDoc.rating,
-          serviceId: newDoc.serviceId,
-          serviceTitle: newDoc.serviceTitle,
-          userEmail: newDoc.userEmail,
-        }}
-      const result = await review.updateOne(filter, updateDoc, options);
-      res.send(result);
-    })
+        app.put('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            newDoc = req.body;
+            const updateDoc = {
+                $set: {
+                    addedDate: newDoc.addedDate,
+                    image: newDoc.image,
+                    review: newDoc.review,
+                    rating: newDoc.rating,
+                    serviceId: newDoc.serviceId,
+                    serviceTitle: newDoc.serviceTitle,
+                    userEmail: newDoc.userEmail,
+                }
+            }
+            const result = await review.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
