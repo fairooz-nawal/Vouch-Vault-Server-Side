@@ -63,6 +63,22 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/searchservices', async (req, res) => {
+            const searchTerm = req.query.search || ''; // Get the search term from the query parameters
+            const regex = new RegExp(searchTerm, 'i'); // Create a case-insensitive regex pattern
+            const query = {
+                $or: [
+                    { serviceTitle: { $regex: regex } },
+                    { category: { $regex: regex } },
+                    { companyName: { $regex: regex } },
+                    { description: { $regex: regex } }
+                ]
+            };
+
+            const cursor = service.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
         // Service API and PUT post Delete
 
         app.post('/services', async (req, res) => {
@@ -95,7 +111,7 @@ async function run() {
                     userEmail: newDoc.userEmail,
                 }
             }
-           console.log("this is updated document",updateDoc); 
+            console.log("this is updated document", updateDoc);
             const result = await service.updateOne(filter, updateDoc, options);
             res.send(result);
         })
