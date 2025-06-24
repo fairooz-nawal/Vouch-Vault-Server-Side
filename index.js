@@ -4,6 +4,8 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const admin = require("firebase-admin");
+const serviceAccount = require("./firebase-adminsdk-Service-key.json");
 
 // middleware
 app.use(cors());
@@ -25,6 +27,38 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+const verifyFirebaseToken = async (req, res, next) => {
+    const authHeader = req.headers?.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).send({ message: "unauthorized access" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    try {
+        // to verify access token from the backend with the firebase to get user info
+        const decoded = await admin.auth().verifyIdToken(token);
+        console.log("token in the middleware", decoded);
+        req.decoded = decoded;
+        next();
+    }
+    catch (error) {
+        res.status(401).send({ message: "unauthorized access" });
+    }
+}
+
+const verfiyTokenEmail = (req, res, next) => {
+    if (req.query.email != req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden Access" });
+    }
+    next();
+};
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -46,7 +80,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/myservices', async (req, res) => {
+        app.get('/myservices',verifyFirebaseToken, verfiyTokenEmail, async (req, res) => {
             const email = req.query.email;
             const query = {
                 userEmail: email
@@ -81,20 +115,20 @@ async function run() {
         });
         // Service API and PUT post Delete
 
-        app.post('/services', async (req, res) => {
+        app.post('/services',verifyFirebaseToken, async (req, res) => {
             const serviceData = req.body;
             const result = await service.insertOne(serviceData);
             res.send(result);
         })
 
-        app.delete('/allservices/:id', async (req, res) => {
+        app.delete('/allservices/:id',verifyFirebaseToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await service.deleteOne(query);
             res.send(result);
         })
 
-        app.put('/allservices/:id', async (req, res) => {
+        app.put('/allservices/:id',verifyFirebaseToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
@@ -125,7 +159,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/reviews', async (req, res) => {
+        app.get('/reviews',verifyFirebaseToken, verfiyTokenEmail, async (req, res) => {
             const email = req.query.email;
             const query = {
                 userEmail: email
@@ -136,21 +170,21 @@ async function run() {
         });
 
         // Review API post delete put
-        app.post('/reviews', async (req, res) => {
+        app.post('/reviews',verifyFirebaseToken, async (req, res) => {
             const reviewData = req.body;
             const result = await review.insertOne(reviewData);
             res.send(result);
         })
 
 
-        app.delete('/reviews/:id', async (req, res) => {
+        app.delete('/reviews/:id',verifyFirebaseToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await review.deleteOne(query);
             res.send(result);
         })
 
-        app.put('/reviews/:id', async (req, res) => {
+        app.put('/reviews/:id',verifyFirebaseToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
