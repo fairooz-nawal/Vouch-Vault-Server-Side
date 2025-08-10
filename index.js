@@ -62,7 +62,7 @@ const verfiyTokenEmail = (req, res, next) => {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const service = client.db("VouchVault").collection("ServiceCollection");
         const review = client.db("VouchVault").collection("ReviewCollection");
@@ -74,11 +74,43 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/allservices', async (req, res) => {
-            const cursor = service.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        });
+app.get('/allservices', async (req, res) => {
+    const { category, sort } = req.query;
+
+    try {
+        let query = {};
+
+        // Filter by category if provided
+        if (category && category !== 'all') {
+            query.category = category;
+        }
+
+        // Fetch services from MongoDB
+        const servicesList = await service.find(query).toArray();
+
+        // Parse price for sorting
+        const parsePrice = (price) => {
+            if (!price) return 0;
+            if (typeof price === 'string' && price.toLowerCase() === 'free') return 0;
+            const match = price.match(/\d+(\.\d+)?/); // extract first number
+            return match ? parseFloat(match[0]) : 0;
+        };
+
+        // Sort if needed
+        if (sort === 'asc') {
+            servicesList.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+        } else if (sort === 'desc') {
+            servicesList.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+        }
+
+        res.send(servicesList);
+
+    } catch (error) {
+        console.error("Error fetching services:", error);
+        res.status(500).send({ message: "Internal server error" });
+    }
+});
+
 
         app.get('/myservices',verifyFirebaseToken, verfiyTokenEmail, async (req, res) => {
             const email = req.query.email;
@@ -153,18 +185,18 @@ async function run() {
 
 
         // Review API get
-        app.get('/reviews', async (req, res) => {
-            const cursor = review.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        });
-
-        app.get('/reviews',verifyFirebaseToken, verfiyTokenEmail, async (req, res) => {
+         app.get('/myreviews',verifyFirebaseToken, verfiyTokenEmail, async (req, res) => {
             const email = req.query.email;
             const query = {
                 userEmail: email
             }
             const cursor = review.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/reviews', async (req, res) => {
+            const cursor = review.find();
             const result = await cursor.toArray();
             res.send(result);
         });
@@ -205,7 +237,7 @@ async function run() {
         })
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
